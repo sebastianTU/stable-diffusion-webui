@@ -144,46 +144,38 @@ class ImageRNG:
                 x[:, ty:ty + h, tx:tx + w] = noise[:, dy:dy + h, dx:dx + w]
                 noise = x
 
-
-            def lerp(a: float, b: float, t: float) -> float:
-                """Linear interpolate on the scale given by a to b, using t as the point on that scale.
-                Examples
-                --------
-                    50 == lerp(0, 100, 0.5)
-                    4.2 == lerp(1, 5, 0.8)
-                """
-                return (1 - t) * a + t * b
+            def lerp(a, b, d):
+                return a * (1 - d) + b * d
 
 
             if self.heatmap is not None:
                 subnoise = randn(int(self.subseed), noise_shape)
 
+                shape = self.shape
+                x1 = shape[1]
+                y1 = shape[2]
+
                 from PIL import Image
                 LANCZOS = (Image.Resampling.LANCZOS if hasattr(Image, 'Resampling') else Image.LANCZOS)
-                hm = self.heatmap.resize((64, 64), LANCZOS)
+                hm = self.heatmap.resize((x1, y1), LANCZOS)
                 import numpy
 
                 pix = numpy.array(hm)
-                target = numpy.zeros((4,64,64))
-                for x in range(64):
-                    for y in range(64):
+                target = numpy.zeros((4,x1,y1))
+                for x in range(x1):
+                    for y in range(y1):
                         r = pix[x][y][0]
                         g = pix[x][y][1]
                         b = pix[x][y][2]
 
                         if r == 0 and g == 0 and b == 0:
                             target[0][x][y] = 1
-                            target[1][x][y] = 1
-                            target[2][x][y] = 1
-                            target[3][x][y] = 1
+
 
                 for c in range(4):
-                    for x in range(64):
-                        for y in range(64):
-                            asdfasdf = 1
+                    for x in range(x1):
+                        for y in range(y1):
                             noise[c][x][y] = lerp(noise[c][x][y].item(), subnoise[c][x][y].item(), target[0][x][y])
-
-                tmp = 1
 
 
             xs.append(noise)
