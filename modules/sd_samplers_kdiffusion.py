@@ -229,7 +229,7 @@ class KDiffusionSampler(sd_samplers_common.Sampler):
             'image_cond': image_conditioning,
             'uncond': unconditional_conditioning,
             'cond_scale': p.cfg_scale,
-            's_min_uncond': self.s_min_uncond
+            's_min_uncond': self.s_min_uncond,
         }
 
         samples = self.launch_sampling(steps, lambda: self.func(self.model_wrap_cfg, x, extra_args=self.sampler_extra_args, disable=False, callback=self.callback_state, **extra_params_kwargs))

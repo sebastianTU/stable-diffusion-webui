@@ -357,6 +357,9 @@ def create_ui():
                     if category not in {"accordions"}:
                         scripts.scripts_txt2img.setup_ui_for_section(category)
 
+                heatmap = gr.Image(elem_id="heatmap", label="Heatmap", interactive=True, type="pil", tool="color-sketch", image_mode="RGB",)
+                subseed = gr.Textbox(label="Subseed")
+
             hr_resolution_preview_inputs = [enable_hr, width, height, hr_scale, hr_resize_x, hr_resize_y]
 
             for component in hr_resolution_preview_inputs:
@@ -405,6 +408,8 @@ def create_ui():
                     hr_prompt,
                     hr_negative_prompt,
                     override_settings,
+                    heatmap,
+                    subseed
 
                 ] + custom_inputs,
 
