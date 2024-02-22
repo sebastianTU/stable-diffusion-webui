@@ -154,7 +154,7 @@ class ImageRNG:
             def lerp(a, b, d):
                 return a * (1 - d) + b * d
 
-            if self.mask is not None:
+            if self.maskLFSM is not None:
                 subnoiseLFSM = randn(int(self.subseedLFSM), noise_shape)
 
                 shape = self.shape
