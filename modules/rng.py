@@ -83,21 +83,24 @@ def create_generator(seed):
 
 # from https://discuss.pytorch.org/t/help-regarding-slerp-function-for-generative-model-sampling/32475/3
 def slerp(val, low, high):
-    low_norm = low/torch.norm(low, dim=1, keepdim=True)
-    high_norm = high/torch.norm(high, dim=1, keepdim=True)
-    dot = (low_norm*high_norm).sum(1)
+    low_norm = low / torch.norm(low, dim=1, keepdim=True)
+    high_norm = high / torch.norm(high, dim=1, keepdim=True)
+    dot = (low_norm * high_norm).sum(1)
 
     if dot.mean() > 0.9995:
         return low * val + high * (1 - val)
 
     omega = torch.acos(dot)
     so = torch.sin(omega)
-    res = (torch.sin((1.0-val)*omega)/so).unsqueeze(1)*low + (torch.sin(val*omega)/so).unsqueeze(1) * high
+    res = (torch.sin((1.0 - val) * omega) / so).unsqueeze(1) * low + (torch.sin(val * omega) / so).unsqueeze(1) * high
     return res
 
 
 class ImageRNG:
-    def __init__(self, shape, seeds, subseeds=None, subseed_strength=0.0, seed_resize_from_h=0, seed_resize_from_w=0, heatmap=None, subseed=None):
+    def __init__(self, shape, seeds, subseeds=None,
+                 subseed_strength=0.0, seed_resize_from_h=0, seed_resize_from_w=0,
+                 # LFSM
+                 mask=None, subseedLFSM=None):
         self.shape = tuple(map(int, shape))
         self.seeds = seeds
         self.subseeds = subseeds
@@ -108,27 +111,30 @@ class ImageRNG:
         self.generators = [create_generator(seed) for seed in seeds]
 
         self.is_first = True
-        self.heatmap = heatmap
-        self.subseed = subseed
+
+        # LFSM
+        self.mask = mask
+        self.subseedLFSM = subseedLFSM
 
     def first(self):
-        noise_shape = self.shape if self.seed_resize_from_h <= 0 or self.seed_resize_from_w <= 0 else (self.shape[0], int(self.seed_resize_from_h) // 8, int(self.seed_resize_from_w // 8))
+        noise_shape = self.shape if self.seed_resize_from_h <= 0 or self.seed_resize_from_w <= 0 else (
+        self.shape[0], int(self.seed_resize_from_h) // 8, int(self.seed_resize_from_w // 8))
 
         xs = []
 
         for i, (seed, generator) in enumerate(zip(self.seeds, self.generators)):
-            subnoise = None
+            subnoiseLFSM = None
             if self.subseeds is not None and self.subseed_strength != 0:
                 subseed = 0 if i >= len(self.subseeds) else self.subseeds[i]
-                subnoise = randn(subseed, noise_shape)
+                subnoiseLFSM = randn(subseed, noise_shape)
 
             if noise_shape != self.shape:
                 noise = randn(seed, noise_shape)
             else:
                 noise = randn(seed, self.shape, generator=generator)
 
-            if subnoise is not None:
-                noise = slerp(self.subseed_strength, noise, subnoise)
+            if subnoiseLFSM is not None:
+                noise = slerp(self.subseed_strength, noise, subnoiseLFSM)
 
             if noise_shape != self.shape:
                 x = randn(seed, self.shape, generator=generator)
@@ -144,12 +150,12 @@ class ImageRNG:
                 x[:, ty:ty + h, tx:tx + w] = noise[:, dy:dy + h, dx:dx + w]
                 noise = x
 
+            # LFSM Anfang
             def lerp(a, b, d):
                 return a * (1 - d) + b * d
 
-
-            if self.heatmap is not None:
-                subnoise = randn(int(self.subseed), noise_shape)
+            if self.mask is not None:
+                subnoiseLFSM = randn(int(self.subseedLFSM), noise_shape)
 
                 shape = self.shape
                 x1 = shape[1]
@@ -157,11 +163,11 @@ class ImageRNG:
 
                 from PIL import Image
                 LANCZOS = (Image.Resampling.LANCZOS if hasattr(Image, 'Resampling') else Image.LANCZOS)
-                hm = self.heatmap.resize((x1, y1), LANCZOS)
+                hm = self.mask.resize((x1, y1), LANCZOS)
                 import numpy
 
                 pix = numpy.array(hm)
-                target = numpy.zeros((4,x1,y1))
+                target = numpy.zeros((4, x1, y1))
                 for x in range(x1):
                     for y in range(y1):
                         r = pix[x][y][0]
@@ -171,14 +177,14 @@ class ImageRNG:
                         if r == 0 and g == 0 and b == 0:
                             target[0][x][y] = 1
 
-
                 for c in range(4):
                     for x in range(x1):
                         for y in range(y1):
-                            noise[c][x][y] = lerp(noise[c][x][y].item(), subnoise[c][x][y].item(), target[0][x][y])
-
+                            noise[c][x][y] = lerp(noise[c][x][y].item(), subnoiseLFSM[c][x][y].item(), target[0][x][y])
 
             xs.append(noise)
+
+            #LFSM ENDE
 
         eta_noise_seed_delta = shared.opts.eta_noise_seed_delta or 0
         if eta_noise_seed_delta:
