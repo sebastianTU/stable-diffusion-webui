@@ -100,7 +100,7 @@ class ImageRNG:
     def __init__(self, shape, seeds, subseeds=None,
                  subseed_strength=0.0, seed_resize_from_h=0, seed_resize_from_w=0,
                  # LFSM
-                 mask=None, subseedLFSM=None):
+                 maskLFSM=None, subseedLFSM=None):
         self.shape = tuple(map(int, shape))
         self.seeds = seeds
         self.subseeds = subseeds
@@ -113,7 +113,7 @@ class ImageRNG:
         self.is_first = True
 
         # LFSM
-        self.mask = mask
+        self.maskLFSM = maskLFSM
         self.subseedLFSM = subseedLFSM
 
     def first(self):
@@ -123,18 +123,18 @@ class ImageRNG:
         xs = []
 
         for i, (seed, generator) in enumerate(zip(self.seeds, self.generators)):
-            subnoiseLFSM = None
+            subnoise = None
             if self.subseeds is not None and self.subseed_strength != 0:
                 subseed = 0 if i >= len(self.subseeds) else self.subseeds[i]
-                subnoiseLFSM = randn(subseed, noise_shape)
+                subnoise = randn(subseed, noise_shape)
 
             if noise_shape != self.shape:
                 noise = randn(seed, noise_shape)
             else:
                 noise = randn(seed, self.shape, generator=generator)
 
-            if subnoiseLFSM is not None:
-                noise = slerp(self.subseed_strength, noise, subnoiseLFSM)
+            if subnoise is not None:
+                noise = slerp(self.subseed_strength, noise, subnoise)
 
             if noise_shape != self.shape:
                 x = randn(seed, self.shape, generator=generator)
@@ -163,7 +163,7 @@ class ImageRNG:
 
                 from PIL import Image
                 LANCZOS = (Image.Resampling.LANCZOS if hasattr(Image, 'Resampling') else Image.LANCZOS)
-                hm = self.mask.resize((x1, y1), LANCZOS)
+                hm = self.maskLFSM.resize((x1, y1), LANCZOS)
                 import numpy
 
                 pix = numpy.array(hm)

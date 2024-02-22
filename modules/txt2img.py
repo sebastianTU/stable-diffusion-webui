@@ -16,7 +16,7 @@ def txt2img(id_task: str, prompt: str, negative_prompt: str, prompt_styles,
             hr_checkpoint_name: str, hr_sampler_name: str, hr_prompt: str,
             hr_negative_prompt, override_settings_texts,
             #LFSM
-            mask, subseedLFSM,
+            maskLFSM, subseedLFSM,
             request: gr.Request, *args):
     override_settings = create_override_settings_dict(override_settings_texts)
 
@@ -47,7 +47,7 @@ def txt2img(id_task: str, prompt: str, negative_prompt: str, prompt_styles,
         hr_negative_prompt=hr_negative_prompt,
         override_settings=override_settings,
         #LFSM
-        mask=mask,
+        maskLFSM=maskLFSM,
         subseedLFSM=subseedLFSM
     )
 

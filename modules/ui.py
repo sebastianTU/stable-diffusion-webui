@@ -358,7 +358,7 @@ def create_ui():
                         scripts.scripts_txt2img.setup_ui_for_section(category)
 
                 #LFSM
-                mask = gr.Image(elem_id="mask", label="Mask", interactive=True, type="pil", tool="color-sketch", image_mode="RGB",)
+                maskLFSM = gr.Image(elem_id="maskLFSM", label="MaskLFSM", interactive=True, type="pil", tool="color-sketch", image_mode="RGB",)
                 subseedLFSM = gr.Textbox(label="SubseedLFSM")
 
             hr_resolution_preview_inputs = [enable_hr, width, height, hr_scale, hr_resize_x, hr_resize_y]
@@ -410,7 +410,7 @@ def create_ui():
                     hr_negative_prompt,
                     override_settings,
                     #LFSM
-                    mask,
+                    maskLFSM,
                     subseedLFSM
 
                 ] + custom_inputs,

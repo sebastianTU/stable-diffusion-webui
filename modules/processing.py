@@ -203,7 +203,7 @@ class StableDiffusionProcessing:
     is_api: bool = field(default=False, init=False)
 
     #LFSM
-    mask: Any = None
+    maskLFSM: Any = None
     subseedLFSM: Any = None
 
     def __post_init__(self):
@@ -838,7 +838,7 @@ def process_images_inner(p: StableDiffusionProcessing) -> Processed:
                                  seed_resize_from_h=p.seed_resize_from_h, 
                                  seed_resize_from_w=p.seed_resize_from_w, 
                                  #LFSM
-                                 mask=p.mask,
+                                 maskLFSM=p.maskLFSM,
                                  subseedLFSM=p.subseedLFSM)
 
             if p.scripts is not None:
@@ -1056,7 +1056,7 @@ class StableDiffusionProcessingTxt2Img(StableDiffusionProcessing):
     hr_extra_network_data: list = field(default=None, init=False)
     
     #LFSM
-    #mask: Any = None
+    #maskLFSM: Any = None
     #subseedLFSM: Any = None
 
     def __post_init__(self):
