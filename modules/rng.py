@@ -174,7 +174,7 @@ class ImageRNG:
 
                 maskLSN = numpy.array(maskLS)
                 #target = numpy.zeros((4, x1, y1))
-                target = numpy.zeros((1, x1, y1))
+                target = numpy.zeros(x1, y1)
 
                 #Iterate over the mask and safe the pixels which are marked (black)
                 #Could be done way more efficient with matrix operations
