@@ -151,15 +151,15 @@ class ImageRNG:
                 noise = x
 
             #LFSM Anfang
-            def lerp(a, b, d):
-                return a * (1 - d) + b * d
+            # def lerp(a, b, d):
+            #     return a * (1 - d) + b * d
 
             #If there is a picture in our Mask UI, the process starts
             if self.maskLFSM is not None:
                 #Creating subNoise the same way noise is created
                 subnoiseLFSM = randn(int(self.subseedLFSM), noise_shape)
 
-                # Get dimensions of latent space
+                #Get dimensions of latent space
                 x1, y1 = self.shape[1], self.shape[2]
 
                 #Move Image Mask to latent space like in img2img
@@ -170,26 +170,35 @@ class ImageRNG:
                 import numpy
 
                 maskLSN = numpy.array(maskLS)
-                target = numpy.zeros((x1, y1))
+                # target = numpy.zeros((x1, y1))
 
                 #Iterate over the mask and safe the pixels which are marked (black)
                 #Could be done way more efficient with matrix operations
                 #Makes it easier to understand this way and fully ok for this experimental use
-                for x in range(x1):
-                    for y in range(y1):
-                        r = maskLSN[x][y][0]
-                        g = maskLSN[x][y][1]
-                        b = maskLSN[x][y][2]
+                # for x in range(x1):
+                #     for y in range(y1):
+                #         r = maskLSN[x][y][0]
+                #         g = maskLSN[x][y][1]
+                #         b = maskLSN[x][y][2]
+                #
+                #         if r == 0 and g == 0 and b == 0:
+                #             target[x][y] = 1
 
-                        if r == 0 and g == 0 and b == 0:
-                            target[x][y] = 1
+                #Vectorbased approach
+                target = numpy.all(maskLSN == [0, 0, 0], axis=-1).astype(int)
 
                 #Interpolate main noise (main seed) with our sub noise (subseed)
                 #As the heatmap was switched to a simple black/white mask the lerp actually just takes either value
-                for c in range(4):
-                    for x in range(x1):
-                        for y in range(y1):
-                            noise[c][x][y] = lerp(noise[c][x][y].item(), subnoiseLFSM[c][x][y].item(), target[x][y])
+                # for c in range(4):
+                #     for x in range(x1):
+                #         for y in range(y1):
+                #             noise[c][x][y] = lerp(noise[c][x][y].item(), subnoiseLFSM[c][x][y].item(), target[x][y])
+
+                #Vectorbased approach
+                #target dimensions have to be adapted to sub/noise
+                target_expanded = target[numpy.newaxis, :, :]
+                target_expanded_tensor = torch.tensor(target_expanded).to("cuda:0")
+                noise = noise * (1 - target_expanded_tensor) + subnoiseLFSM * target_expanded_tensor
 
             xs.append(noise)
 
