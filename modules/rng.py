@@ -162,14 +162,12 @@ class ImageRNG:
                 #Get dimensions of latent space
                 x1, y1 = self.shape[1], self.shape[2]
 
-                #Move Image Mask to latent space like in img2img
                 from PIL import Image
-                LANCZOS = (Image.Resampling.LANCZOS if hasattr(Image, 'Resampling') else Image.LANCZOS)
-                maskLS = self.maskLFSM.resize((x1, y1), LANCZOS)
-
                 import numpy
 
-                maskLSN = numpy.array(maskLS)
+                # Move Image Mask to latent space like in img2img
+                LANCZOS = (Image.Resampling.LANCZOS if hasattr(Image, 'Resampling') else Image.LANCZOS)
+                maskLS = numpy.array(self.maskLFSM.resize((x1, y1), LANCZOS))
                 # target = numpy.zeros((x1, y1))
 
                 #Iterate over the mask and safe the pixels which are marked (black)
@@ -185,7 +183,7 @@ class ImageRNG:
                 #             target[x][y] = 1
 
                 #Vectorbased approach
-                target = numpy.all(maskLSN == [0, 0, 0], axis=-1).astype(int)
+                target = numpy.all(maskLS == [0, 0, 0], axis=-1).astype(int)
 
                 #Interpolate main noise (main seed) with our sub noise (subseed)
                 #As the heatmap was switched to a simple black/white mask the lerp actually just takes either value
@@ -196,9 +194,10 @@ class ImageRNG:
 
                 #Vectorbased approach
                 #target dimensions have to be adapted to sub/noise
-                target_expanded = target[numpy.newaxis, :, :]
-                target_expanded_tensor = torch.tensor(target_expanded).to("cuda:0")
-                noise = noise * (1 - target_expanded_tensor) + subnoiseLFSM * target_expanded_tensor
+                target = target[numpy.newaxis, :, :]
+                target_t = torch.tensor(target).to("cuda")
+                #no function lerp from above needed
+                noise = noise * (1 - target_t) + subnoiseLFSM * target_t
 
             xs.append(noise)
 
